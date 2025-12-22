@@ -18,10 +18,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="https://cutempire03.github.io/melodify01/" element={<Index />} />
-            <Route path="https://cutempire03.github.io/melodify01/auth" element={<Auth />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="https://cutempire03.github.io/melodify01/*" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
