@@ -5,6 +5,14 @@ import ProgressBar from "./ProgressBar";
 import VolumeControl from "./VolumeControl";
 import { cn } from "@/lib/utils";
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Trash2 } from "lucide-react"; 
+
 interface Song {
   id: string;
   title: string;
@@ -36,6 +44,7 @@ interface NowPlayingProps {
   onLikeToggle: () => void;
   onQueueToggle: () => void;
   showQueue: boolean;
+  onDeleteSong: (id: string) => void;
 }
 
 const NowPlaying = ({
@@ -59,6 +68,8 @@ const NowPlaying = ({
   onLikeToggle,
   onQueueToggle,
   showQueue,
+  onDeleteSong,
+
 }: NowPlayingProps) => {
   const defaultCover = "https://images.unsplash.com/photo-1614149162883-504ce4d13909?w=400&h=400&fit=crop";
 
@@ -119,9 +130,23 @@ const NowPlaying = ({
         >
           <ListMusic className="w-6 h-6" />
         </button>
-        <button className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-all duration-300 hover:scale-110">
-          <MoreHorizontal className="w-6 h-6" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-all duration-300 hover:scale-110">
+              <MoreHorizontal className="w-6 h-6" />
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="center">
+            <DropdownMenuItem
+              className="text-destructive cursor-pointer"
+              onClick={() => onDeleteSong(song.id)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Apagar música
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Progress Bar */}
