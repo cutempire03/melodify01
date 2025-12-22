@@ -55,7 +55,7 @@ const Index = () => {
   // redirect para o login se não está logado
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("https://cutempire03.github.io/melodify01/auth");
+      navigate("/auth");
     }
   }, [user, authLoading, navigate]);
 
