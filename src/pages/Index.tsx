@@ -40,16 +40,26 @@ const Index = () => {
   const [showQueue, setShowQueue] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+  const handleNextRef = useRef<() => void>(() => {});
+  const currentSongIndexRef = useRef(0);
   const currentSong = songs[currentSongIndex] || null;
 
-  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (songs.length === 0) return;
+
+    if(currentSongIndex < 0 || currentSongIndex >= songs.length) {
+      setCurrentSongIndex(0);
+    }
+  }, [songs, currentSongIndex])
+
+  // redirect para o login se não está logado
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch songs from database
+  // procura sons na database
   const fetchSongs = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -75,7 +85,11 @@ const Index = () => {
     fetchSongs();
   }, [fetchSongs]);
 
-  // Audio element setup
+  useEffect(() => {
+    currentSongIndexRef.current = currentSongIndex;
+  }, [currentSongIndex]);
+
+  // elementos do audio
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
@@ -92,8 +106,16 @@ const Index = () => {
     };
 
     const handleEnded = () => {
-      handleNext();
-    };
+      setCurrentSongIndex((prev) => {
+        if(prev === songs.length - 1) {
+          if(repeatMode === "all") return 0;
+          setIsPlaying(false);
+          return prev
+        }
+        return prev + 1;
+      });
+      setCurrentTime(0);
+    }
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
@@ -157,35 +179,34 @@ const Index = () => {
   }, [currentTime, songs.length]);
 
   const handleNext = useCallback(() => {
-    if (songs.length === 0) return;
-    
-    if (repeatMode === "one") {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(console.error);
-      }
-      setCurrentTime(0);
-      return;
-    }
-    
-    if (isShuffled) {
-      let newIndex;
-      do {
-        newIndex = Math.floor(Math.random() * songs.length);
-      } while (newIndex === currentSongIndex && songs.length > 1);
-      setCurrentSongIndex(newIndex);
-    } else {
-      setCurrentSongIndex((prev) => {
-        if (prev === songs.length - 1) {
-          if (repeatMode === "all") return 0;
-          setIsPlaying(false);
-          return prev;
-        }
-        return prev + 1;
-      });
+  if (songs.length === 0) return;
+
+  if (repeatMode === "one") {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(console.error);
     }
     setCurrentTime(0);
-  }, [isShuffled, repeatMode, currentSongIndex, songs.length]);
+    return;
+  }
+
+  let nextIndex = currentSongIndex;
+
+  if (isShuffled) {
+    do {
+      nextIndex = Math.floor(Math.random() * songs.length);
+    } while (nextIndex === currentSongIndex && songs.length > 1);
+  } else {
+    nextIndex =
+      currentSongIndex === songs.length - 1
+        ? 0
+        : currentSongIndex + 1;
+  }
+
+  setCurrentSongIndex(nextIndex);
+  setCurrentTime(0);
+  setIsPlaying(true);
+}, [isShuffled, repeatMode, currentSongIndex, songs.length]);
 
   const handleSeek = (value: number[]) => {
     const newTime = value[0];
@@ -253,12 +274,10 @@ const Index = () => {
       // Update local state
       setSongs((prev) => prev.filter((s) => s.id !== songId));
       
-      // Adjust current song index if needed
       if (deletedIndex < currentSongIndex) {
         setCurrentSongIndex((prev) => prev - 1);
       } else if (isCurrentSongDeleted && songs.length > 1) {
-        // If we deleted the current song and there are more songs, stay at same index
-        // (which will now point to the next song) or go to 0 if we were at the end
+        // quando deleta a música o valor diminui, se chegar a 0 é quer dizer que é o fim
         if (deletedIndex >= songs.length - 1) {
           setCurrentSongIndex(0);
         }
@@ -336,6 +355,7 @@ const Index = () => {
               onLikeToggle={handleLikeToggle}
               onQueueToggle={() => setShowQueue(!showQueue)}
               showQueue={showQueue}
+              onDeleteSong={handleSongDelete}
             />
           </div>
 
